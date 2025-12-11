@@ -55,10 +55,9 @@ def build_chunks():
     chunked_document_text_list = chunk_text(cleaned_document_text)
     
     for chunk in chunked_document_text_list:
-        print(chunk)
-        dict_chunk_list.append(dict(id = uuid.uuid4(), text = chunk, metadata = {}))
+        dict_chunk_list.append(dict(id=str(uuid.uuid4()), text=chunk, metadata={}))
 
-    # print(dict_chunk_list)    
+    print(dict_chunk_list)    
 
     return ""
 
