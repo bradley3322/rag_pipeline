@@ -86,7 +86,6 @@ def index_chunks():
     documents_list = []
     metadata_list = []
     embeddings_list = []
-    delete_all_db_data()
     dict_chunk_list = build_chunks()
     logging.info(f"Generated {len(dict_chunk_list)} chunks to index.")
     print(dict_chunk_list)
@@ -99,7 +98,6 @@ def index_chunks():
         embeddings_list.append(get_embeddings(chunk['text']))
     logging.info(f"Generated embeddings for {len(embeddings_list)} chunks.")
     
-    # delete_all_db_data()
     add_chunks_to_db(id_list, documents_list, metadata_list, embeddings_list)
     response = query_texts_from_db("what if you had a complaint about your leadership?", n_results=5)
     logging.info(f"Query response: {str(response)}")
