@@ -51,6 +51,8 @@ coverage.xml
 
 # Jupyter Notebook
 .ipynb_checkpoints
+notebooks/
+data/
 
 # pyenv
 .python-version
@@ -83,3 +85,6 @@ Desktop.ini
 # dotenv
 .env
 .env.*
+
+# ChromaDB persistent storage
+chroma/
