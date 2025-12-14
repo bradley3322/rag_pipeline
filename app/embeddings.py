@@ -3,7 +3,6 @@ import logging
 from typing import Any, List, Union, Optional
 from sentence_transformers import SentenceTransformer
 
-# Configure logging for this module
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class Embeddings:
