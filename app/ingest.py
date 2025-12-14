@@ -3,13 +3,12 @@ import logging
 from datetime import datetime
 from pypdf import PdfReader
 import re
-import uuid
 
 from app.embeddings import get_embeddings
-from app.vectorstore import add_chunks_to_db
+from app.vectorstore import add_chunks_to_db, query_texts_from_db, delete_all_db_data
 
 
-MAX_CHUNK_SIZE = 500
+MAX_CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 50
 DOCUMENT_NAME = "test_one"
 DOCUMENT_PATH = "data/raw_docs/test_one.pdf"
@@ -28,38 +27,35 @@ def clean_text(page):
     text = page.lower()
     text = text.replace('\xa0', ' ')
     text = re.sub(r'[^a-z0-9\s\-\'\.]', ' ', text)
-    text = re.sub(r'\s+', ' ', text)
+    text = re.sub(r'[ \t\r\f\v]+', ' ', text)
     cleaned = text.strip()
     logging.info(f"Cleaned text length: {len(cleaned)}")
     return cleaned
 
-def chunk_text(sentence):
-    logging.info("Chunking text.")
-    sentences_to_process = split_into_sentences(sentence)
+def recursive_chunk(text):
+    paragraphs = re.split(r'\n{2,}', text)
     final_chunks = []
-    current_chunk = ""
 
-    for current_sentence in sentences_to_process:
-        if len(current_chunk) + len(current_sentence) + 1 > MAX_CHUNK_SIZE:
-            final_chunks.append(current_chunk.strip())
-            current_chunk = current_chunk[-CHUNK_OVERLAP:].strip() + " " + current_sentence
+    for para in paragraphs:
+        if len(para) <= MAX_CHUNK_SIZE:
+            final_chunks.append(para.strip())
         else:
-            if current_chunk:
-                current_chunk += " " + current_sentence
-            else:
-                current_chunk = current_sentence
+            lines = re.split(r'\n', para)
+            current = ""
+            for line in lines:
+                if len(current) + len(line) + 1 > MAX_CHUNK_SIZE:
+                    if current:
+                        final_chunks.append(current.strip())
+                    current = line
+                else:
+                    if current:
+                        current += "\n" + line
+                    else:
+                        current = line
+            if current:
+                final_chunks.append(current.strip())
+    return [chunk for chunk in final_chunks if chunk]
 
-    if current_chunk:
-        final_chunks.append(current_chunk.strip())
-    logging.info(f"Chunked into {len(final_chunks)} chunks.")
-    return final_chunks
-
-def split_into_sentences(text):
-    logging.info("Splitting text into sentences.")
-    sentence_endings = re.compile(r'(?<=[.!?]) +')
-    sentences = sentence_endings.split(text)
-    logging.info(f"Split into {len(sentences)} sentences.")
-    return sentences
 
 def build_chunks():
     logging.info("Building chunks from document.")
@@ -76,10 +72,10 @@ def build_chunks():
         raw_document_text += raw_text + " "
 
     cleaned_document_text = clean_text(raw_document_text)
-    chunked_document_text_list = chunk_text(cleaned_document_text)
+    chunked_document_text_list = recursive_chunk(cleaned_document_text)
 
     for i, chunk in enumerate(chunked_document_text_list):
-        dict_chunk_list.append(dict(id=str(uuid.uuid4()), text=chunk, metadata={'source_file': DOCUMENT_NAME, 'date_issued': str(datetime.now()), 'page_number': str(pn), 'chunk_index': str(i)}))
+        dict_chunk_list.append(dict(id=DOCUMENT_NAME+'_'+str(i), text=chunk, metadata={'source_file': DOCUMENT_NAME, 'date_issued': str(datetime.now()), 'page_number': str(pn), 'chunk_index': str(i)}))
 
     logging.info(f"Built {len(dict_chunk_list)} chunk dictionaries.")
     return dict_chunk_list
@@ -90,8 +86,10 @@ def index_chunks():
     documents_list = []
     metadata_list = []
     embeddings_list = []
-
+    delete_all_db_data()
     dict_chunk_list = build_chunks()
+    logging.info(f"Generated {len(dict_chunk_list)} chunks to index.")
+    print(dict_chunk_list)
 
     for chunk in dict_chunk_list:
         id_list.append(chunk['id'])
@@ -101,7 +99,10 @@ def index_chunks():
         embeddings_list.append(get_embeddings(chunk['text']))
     logging.info(f"Generated embeddings for {len(embeddings_list)} chunks.")
     
+    # delete_all_db_data()
     add_chunks_to_db(id_list, documents_list, metadata_list, embeddings_list)
+    response = query_texts_from_db("what if you had a complaint about your leadership?", n_results=5)
+    logging.info(f"Query response: {str(response)}")
 
     return ""
 
