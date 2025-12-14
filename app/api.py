@@ -15,6 +15,8 @@ class QueryAPI:
         return {"status": "healthy"}    
     
     async def query_endpoint(self, request: QueryRequest):
+        
+        
         return {"query": request.query,
                 "n_results": request.n_results}
 
