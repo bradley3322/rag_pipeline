@@ -27,11 +27,11 @@ class PDFIngestor:
             raise
 
     @staticmethod
-    def clean_text(text: str) -> str:
+    def clean_text_for_chunking(text: str) -> str:
         logging.info("Cleaning text.")
         if not isinstance(text, str):
-            logging.error("Input to clean_text must be a string.")
-            raise ValueError("Input to clean_text must be a string.")
+            logging.error("Input to clean_text_for_chunking must be a string.")
+            raise ValueError("Input to clean_text_for_chunking must be a string.")
         text = text.lower()
         text = text.replace('\xa0', ' ')
         text = re.sub(r'[^a-z0-9\s\-\'\.]', ' ', text)
@@ -39,6 +39,7 @@ class PDFIngestor:
         cleaned = text.strip()
         logging.info(f"Cleaned text length: {len(cleaned)}")
         return cleaned
+    
 
     def recursive_chunk(self, text: str) -> List[str]:
         paragraphs = re.split(r'\n{2,}', text)
@@ -79,7 +80,7 @@ class PDFIngestor:
                 logging.info(f"Extracted text from page {pn}, length: {len(raw_text) if raw_text else 0}")
                 raw_document_text += (raw_text or "") + " "
 
-            cleaned_document_text = self.clean_text(raw_document_text)
+            cleaned_document_text = self.clean_text_for_chunking(raw_document_text)
             chunked_document_text_list = self.recursive_chunk(cleaned_document_text)
 
             for i, chunk in enumerate(chunked_document_text_list):
@@ -107,7 +108,6 @@ class PDFIngestor:
             embeddings_list: List[Any] = []
             dict_chunk_list = self.build_chunks()
             logging.info(f"Generated {len(dict_chunk_list)} chunks to index.")
-            # print(dict_chunk_list)  # Remove or comment out for production
 
             for chunk in dict_chunk_list:
                 id_list.append(chunk['id'])
