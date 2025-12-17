@@ -5,7 +5,7 @@ from typing import List, Dict, Any, Optional
 class VectorStore:
     _client: Optional[chromadb.PersistentClient] = None
     _collection: Optional[Any] = None
-    _collection_name: str = "test_collection" # TODO: Make this configurable
+    _collection_name: str = "dnd_players_handbook_2014_collection" # TODO: Make this configurable
 
     @classmethod
     def _get_client(cls) -> chromadb.PersistentClient:

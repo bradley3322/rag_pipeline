@@ -131,8 +131,8 @@ class PDFIngestor:
 
 if __name__ == "__main__":
     # Configurable parameters
-    DOCUMENT_NAME = "test_one"
-    DOCUMENT_PATH = "data/raw_docs/test_one.pdf"
+    DOCUMENT_NAME = "dnd_players_handbook_2014.pdf"
+    DOCUMENT_PATH = "data/raw_docs/dnd_players_handbook_2014.pdf"
     MAX_CHUNK_SIZE = 1000
     CHUNK_OVERLAP = 50
 

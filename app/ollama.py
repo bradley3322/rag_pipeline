@@ -5,23 +5,30 @@ import json
 from typing import List
 
 OLLAMA_API_URL = "http://localhost:11434/api/generate"
-MODEL_NAME = "gemma:2b" 
+MODEL_NAME = "llama3:8b" 
 
 def generate_rag_prompt(query: str, retrieved_context: List[str]) -> str:
     context_text = "\n---\n".join(retrieved_context)
 
     prompt = f"""
-    You are a helpful and knowledgeable assistant. Use ONLY the following provided context
-    to answer the user's question. Do not use any external knowledge.
-    If the context does not contain the answer, state clearly that the information is not available
-    in the provided documents.
+    You are a **Literal Text Extractor**. Your sole purpose is to find a direct, single-sentence answer to the QUESTION within the CONTEXT.
 
-    CONTEXT:
+    **CONTEXT:**
     {context_text}
 
-    QUESTION: {query}
+    **QUESTION:** {query}
 
-    ANSWER:
+    # Updated INSTRUCTIONS for Maximum Safety
+
+    **INSTRUCTIONS:**
+    1. Read the QUESTION and the CONTEXT.
+    2. **First, check if the subject of the QUESTION (e.g., 'Fighter', 'Asbestos') is explicitly mentioned in the CONTEXT.**
+    3. If the subject is **NOT** mentioned, immediately output ONLY: `RULE_NOT_FOUND`.
+    4. If the subject **IS** mentioned, proceed to search for the specific rule.
+    5. Search for the single sentence that provides the most absolute rule about the QUESTION (using keywords like 'only when,' 'otherwise don\'t,' or 'cannot'). **OUTPUT THAT EXACT SENTENCE**.
+    6. Do NOT output any spell descriptions, long paragraphs, or synthesis.
+
+**ANSWER (Start immediately with the extracted sentence or the token):**
     """
     return prompt
 
@@ -36,6 +43,8 @@ def generate_response_ollama(rag_prompt: str) -> str:
             "num_predict": 1024 
         }
     }
+
+    print(str(payload))
     
     try:
         response = requests.post(OLLAMA_API_URL, json=payload, timeout=120)

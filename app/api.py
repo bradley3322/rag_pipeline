@@ -11,8 +11,8 @@ app = FastAPI()
 class QueryAPI:
     def __init__(self):
         self.router = APIRouter()
-        self.router.add_api_route("/query/", self.query_endpoint, methods=["POST"])
-        self.router.add_api_route("/health/", self.health_endpoint, methods=["GET"])
+        self.router.add_api_route("/query", self.query_endpoint, methods=["POST"])
+        self.router.add_api_route("/health", self.health_endpoint, methods=["GET"])
         
     @staticmethod
     def clean_text_for_response(text: str) -> str:

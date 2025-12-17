@@ -10,10 +10,10 @@ This project implements a Retrieval-Augmented Generation (RAG) pipeline using Fa
 - [Project Structure](#project-structure)
 - [Setup Instructions](#setup-instructions)
   - [1. Environment Setup](#1-environment-setup)
-  - [2. Data Preparation](#2-data-preparation)
-  - [3. Ingesting Documents](#3-ingesting-documents)
-  - [4. Running the API](#4-running-the-api)
-  - [5. Ollama LLM Setup](#5-ollama-llm-setup)
+  - [2. Ollama LLM Setup](#2-ollama-llm-setup)
+  - [3. Data Preparation](#3-data-preparation)
+  - [4. Ingesting Documents](#4-ingesting-documents)
+  - [5. Running the API](#5-running-the-api)
 - [API Usage](#api-usage)
 - [Notes](#notes)
 
@@ -74,11 +74,27 @@ python -m venv venv
 source venv/bin/activate
 ```
 
-### 2. Data Preparation
+### 2. Ollama LLM Setup
+
+- [Install Ollama](https://ollama.com/download) and start the Ollama server locally:
+
+```bash
+ollama serve
+```
+
+- Pull the required model (e.g., llama3:8b):
+
+```bash
+ollama pull llama3:8b
+```
+
+- The API expects Ollama to be running at `http://localhost:11434`.
+
+### 3. Data Preparation
 
 - Place your PDF files in the `data/raw_docs/` directory.
 
-### 3. Ingesting Documents
+### 4. Ingesting Documents
 
 - Run the ingestion script to process and index your PDFs:
 
@@ -88,7 +104,7 @@ python -m app.ingest
 
 - This will extract, chunk, embed, and store your documents in ChromaDB.
 
-### 4. Running the API
+### 5. Running the API
 
 - Start the FastAPI server:
 
@@ -97,22 +113,6 @@ uvicorn app.api:app --reload
 ```
 
 - The API will be available at `http://localhost:8000/api/`
-
-### 5. Ollama LLM Setup
-
-- [Install Ollama](https://ollama.com/download) and start the Ollama server locally:
-
-```bash
-ollama serve
-```
-
-- Pull the required model (e.g., gemma:2b):
-
-```bash
-ollama pull gemma:2b
-```
-
-- The API expects Ollama to be running at `http://localhost:11434`.
 
 ---
 
@@ -148,6 +148,10 @@ ollama pull gemma:2b
 - Embeddings are generated for each chunk during ingestion (see `app/embeddings.py`).
 - The RAG prompt is constructed using the top retrieved document chunks and sent to Ollama for answer generation.
 - You can modify chunking, embedding, and model settings in the respective files.
+
+### Notes on Testing
+
+- Current testing is being conducted using the Dungeons & Dragons Player's Handbook (2014 edition) as the primary document. This ensures the pipeline processes complex and structured text effectively.
 
 ---
 
