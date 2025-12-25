@@ -1,4 +1,5 @@
-from pydantic import BaseModel
+from typing import List
+from pydantic import BaseModel, ConfigDict
 
 class QueryRequest(BaseModel):
     query: str
@@ -9,3 +10,12 @@ class QueryReturn(BaseModel):
 
 class APIResponse(BaseModel):
     Answer: str
+
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+class ChatCompletionRequest(BaseModel):
+    model: str
+    messages: List[ChatMessage]
+    stream: bool = False

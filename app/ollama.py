@@ -18,15 +18,14 @@ def generate_rag_prompt(query: str, retrieved_context: List[str]) -> str:
 
     **QUESTION:** {query}
 
-    # Updated INSTRUCTIONS for Maximum Safety
-
     **INSTRUCTIONS:**
     1. Read the QUESTION and the CONTEXT.
-    2. **First, check if the subject of the QUESTION (e.g., 'Fighter', 'Asbestos') is explicitly mentioned in the CONTEXT.**
-    3. If the subject is **NOT** mentioned, immediately output ONLY: `RULE_NOT_FOUND`.
-    4. If the subject **IS** mentioned, proceed to search for the specific rule.
-    5. Search for the single sentence that provides the most absolute rule about the QUESTION (using keywords like 'only when,' 'otherwise don\'t,' or 'cannot'). **OUTPUT THAT EXACT SENTENCE**.
-    6. Do NOT output any spell descriptions, long paragraphs, or synthesis.
+    2. **Subject Check:** If the subject (e.g., 'Fighter') is NOT mentioned, but the action (e.g., 'summoning') IS mentioned for other subjects (e.g., 'Wizard'):
+    - Output: `SUBJECT_MISSING: The context discusses [Action] but only in relation to [Other Subjects].`
+    3. If the subject IS mentioned but the specific rule isn't there:
+    - Output: `RULE_NOT_FOUND`.
+    4. If the subject and rule are both found:
+    - Output ONLY the exact sentence.
 
 **ANSWER (Start immediately with the extracted sentence or the token):**
     """
@@ -40,7 +39,7 @@ def generate_response_ollama(rag_prompt: str) -> str:
         "stream": False, 
         "options": {
             "temperature": 0.2, 
-            "num_predict": 1024 
+            "num_predict": 5120 
         }
     }
 

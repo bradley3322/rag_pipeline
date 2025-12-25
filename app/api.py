@@ -1,9 +1,9 @@
 import re
-from typing import Union, Optional
+import time
 from fastapi import APIRouter, FastAPI
 
 from app.ollama import generate_rag_prompt, generate_response_ollama
-from app.schemas import QueryRequest
+from app.schemas import QueryRequest, ChatCompletionRequest
 from app.vectorstore import query_texts_from_db
 
 app = FastAPI()
@@ -13,6 +13,8 @@ class QueryAPI:
         self.router = APIRouter()
         self.router.add_api_route("/query", self.query_endpoint, methods=["POST"])
         self.router.add_api_route("/health", self.health_endpoint, methods=["GET"])
+        self.router.add_api_route("/v1/models", self.list_models, methods=["GET"])
+        self.router.add_api_route("/v1/chat/completions", self.chat_completions_endpoint, methods=["POST"])
         
     @staticmethod
     def clean_text_for_response(text: str) -> str:
@@ -36,6 +38,19 @@ class QueryAPI:
     async def health_endpoint(self):
         return {"status": "healthy"}    
     
+    async def list_models(self):
+        return {
+            "object": "list",
+            "data": [
+                {
+                    "id": "dnd players guide", 
+                    "object": "model",
+                    "created": int(time.time()),
+                    "owned_by": "local-rag"
+                }
+            ]
+        }
+    
     async def query_endpoint(self, request: QueryRequest):
         query_results = query_texts_from_db(request.query, request.n_results)
         
@@ -46,7 +61,30 @@ class QueryAPI:
         print("---")
         print(f"LLM Answer:\n{llm_answer}")
         return self.build_response_for_query(query_results)
+    
+    async def chat_completions_endpoint(self, request: ChatCompletionRequest):
+        user_query = request.messages[-1].content
+        query_results = query_texts_from_db(user_query, n_results=5)
+        
+        extractor_prompt = generate_rag_prompt(user_query, query_results.get("documents", [])[0])
+        llm_answer = generate_response_ollama(extractor_prompt)
+        
+        return {
+            "id": f"chatcmpl-{int(time.time())}",
+            "object": "chat.completion",
+            "created": int(time.time()),
+            "model": request.model,
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {
+                        "role": "assistant",
+                        "content": llm_answer
+                    },
+                    "finish_reason": "stop"
+                }
+            ]
+        }
 
 query_api = QueryAPI()
-app.include_router(query_api.router, prefix="/api")
-        
+app.include_router(query_api.router)
